@@ -1,8 +1,9 @@
 # Todo CRUD Backend Server
 A RESTful CRUD API built with Express.js and TypeScript, using Drizzle ORM + SQLite for persistence and Redis for caching.
 
-*Note: i used one of my base express projects to build this API, so eventually it will contain some other features that are not related to the problem description, including: *
-* - Logger: Used to log requests and responses with process time, as well as errors *
+_Note 1: I used one of my base express projects to build this API, so eventually it will contain some other features that are not related to the problem description, including loggers and some middlewares to handle common API behavior_
+_Note 2: Since the "resource" that the problem mentioned is not proper, so I assumed it as a todo list instead, with all CRUD actions included just like as the requirement_
+
 
 
 ## Prerequisites
