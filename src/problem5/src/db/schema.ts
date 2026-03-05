@@ -1,27 +1,26 @@
-import { sqliteTable, text, index} from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { pgTable, uuid, varchar, text, timestamp, index } from 'drizzle-orm/pg-core';
 import { TodoStatus, TodoPriority } from '../models/todo.model';
 
-export const todos = sqliteTable(
+export const todos = pgTable(
   'todos',
   {
-    id: text('id').primaryKey(),
-    title: text('title').notNull(),
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: varchar('title', { length: 255 }).notNull(),
     description: text('description').notNull().default(''),
-    status: text('status', { enum: [TodoStatus.PENDING, TodoStatus.IN_PROGRESS, TodoStatus.COMPLETED] })
+    status: varchar('status', { length: 20, enum: [TodoStatus.PENDING, TodoStatus.IN_PROGRESS, TodoStatus.COMPLETED] })
       .notNull()
       .default(TodoStatus.PENDING),
-    priority: text('priority', { enum: [TodoPriority.LOW, TodoPriority.MEDIUM, TodoPriority.HIGH] })
+    priority: varchar('priority', { length: 10, enum: [TodoPriority.LOW, TodoPriority.MEDIUM, TodoPriority.HIGH] })
       .notNull()
       .default(TodoPriority.MEDIUM),
-    dueDate: text('due_date'),
-    completedAt: text('completed_at'),
-    createdAt: text('created_at')
+    dueDate: timestamp('due_date', { mode: 'string' }),
+    completedAt: timestamp('completed_at', { mode: 'string' }),
+    createdAt: timestamp('created_at', { mode: 'string' })
       .notNull()
-      .default(sql`(datetime('now'))`),
-    updatedAt: text('updated_at')
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { mode: 'string' })
       .notNull()
-      .default(sql`(datetime('now'))`),
+      .defaultNow(),
   },
   (table) => [
     index('idx_todos_status').on(table.status),

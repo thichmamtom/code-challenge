@@ -22,7 +22,7 @@ export class TodoService {
    */
   async create(dto: CreateTodoDto): Promise<Todo> {
     logger.debug('Service: Creating a new todo in database', { title: dto.title });
-    const todo = this.repository.create(dto);
+    const todo = await this.repository.create(dto);
     logger.debug('Service: Todo created, invalidating caches', { id: todo.id });
     await this.invalidateListCache();
     return todo;
@@ -46,7 +46,7 @@ export class TodoService {
     }
 
     logger.debug('Service: Cache miss for findById, querying database', { id });
-    const todo = this.repository.findById(id);
+    const todo = await this.repository.findById(id);
 
     if (todo && redis) {
       try {
@@ -76,7 +76,7 @@ export class TodoService {
     }
 
     logger.debug('Service: Cache miss for findAll, querying database', { filter });
-    const result = this.repository.findAll(filter);
+    const result = await this.repository.findAll(filter);
 
     if (redis) {
       try {
@@ -93,7 +93,7 @@ export class TodoService {
    */
   async update(id: string, dto: UpdateTodoDto): Promise<Todo | null> {
     logger.debug('Service: Updating todo in database', { id });
-    const todo = this.repository.update(id, dto);
+    const todo = await this.repository.update(id, dto);
 
     if (todo) {
       logger.debug('Service: Todo updated, invalidating caches', { id });
@@ -109,7 +109,7 @@ export class TodoService {
    */
   async delete(id: string): Promise<boolean> {
     logger.debug('Service: Deleting todo from database', { id });
-    const deleted = this.repository.delete(id);
+    const deleted = await this.repository.delete(id);
 
     if (deleted) {
       logger.debug('Service: Todo deleted, invalidating caches', { id });
@@ -123,7 +123,9 @@ export class TodoService {
   private async invalidateItemCache(id: string): Promise<void> {
     const redis = getRedis();
     if (redis) {
-      try { await redis.del(`${config.cache.prefix}${id}`); } catch { /* non-critical */ }
+      try { await redis.del(`${config.cache.prefix}${id}`); } catch {
+        // Skip error
+      }
     }
   }
 
@@ -139,6 +141,8 @@ export class TodoService {
         cursor = newCursor;
         if (keys.length > 0) await redis.del(...keys);
       } while (cursor !== '0');
-    } catch { /* non-critical */ }
+    } catch { 
+      // Skip error
+    }
   }
 }

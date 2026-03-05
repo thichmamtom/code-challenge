@@ -1,6 +1,5 @@
 import express from 'express';
 import { config } from './config';
-import { migrate } from './db/migrate';
 import { closeDatabase } from './db/database';
 import { closeRedis } from './db/redis';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
@@ -40,9 +39,6 @@ app.use(errorHandler);
 
 // --- Start Server ---
 function start(): void {
-  // Run migrations
-  migrate();
-
   const server = app.listen(config.port, () => {
     logger.info(`🚀 Server running on http://localhost:${config.port}`);
     logger.info(`📦 Environment: ${config.nodeEnv}`);
@@ -52,7 +48,7 @@ function start(): void {
   const shutdown = async (signal: string) => {
     logger.info(`\n${signal} received. Shutting down gracefully...`);
     server.close(async () => {
-      closeDatabase();
+      await closeDatabase();
       await closeRedis();
       logger.info('👋 Server shut down.');
       process.exit(0);

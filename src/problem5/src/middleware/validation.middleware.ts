@@ -8,11 +8,8 @@ interface ValidatedData {
   params?: unknown;
 }
 
-/**
- * Generic validation middleware.
- * Validates a specific part of the request and stores the parsed result
- * on `res.locals.validated[source]` for type-safe access in controllers.
- */
+// Validates a specific part of the request and stores the parsed result
+//  * on `res.locals.validated[source]` for type-safe access in controllers.
 function validate(source: 'body' | 'query' | 'params') {
   return (schema: z.ZodSchema) => {
     return (req: Request, res: Response, next: NextFunction): void => {

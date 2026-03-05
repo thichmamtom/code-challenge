@@ -5,10 +5,7 @@ export interface AppError extends Error {
   statusCode?: number;
 }
 
-/**
- * Global error handling middleware.
- * Must have all 4 parameters to be recognized by Express as an error handler.
- */
+// Global error handling middleware.
 export function errorHandler(
   err: AppError,
   _req: Request,
@@ -31,9 +28,7 @@ export function errorHandler(
   });
 }
 
-/**
- * 404 handler for unmatched routes.
- */
+// 404 handler for unmatched routes.
 export function notFoundHandler(req: Request, res: Response): void {
   res.status(404).json({
     success: false,

@@ -1,5 +1,5 @@
 import { eq, like, and, asc, desc, count, SQL } from 'drizzle-orm';
-import { getDatabase } from '../db/database';
+import { db } from '../db/database';
 import { todos } from '../db/schema';
 import {
   Todo,
@@ -14,12 +14,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class TodoRepository {
   // Create a new todo in the database.
-  create(dto: CreateTodoDto): Todo {
-    const db = getDatabase();
+  async create(dto: CreateTodoDto): Promise<Todo> {
     const id = uuidv4();
     const now = new Date().toISOString();
 
-    db.insert(todos)
+    await db.insert(todos)
       .values({
         id,
         title: dto.title,
@@ -30,24 +29,22 @@ export class TodoRepository {
         completedAt: dto.status === TodoStatus.COMPLETED ? now : null,
         createdAt: now,
         updatedAt: now,
-      })
-      .run();
+      });
 
-    return this.findById(id)!;
+    return (await this.findById(id))!;
   }
 
   // Find a single todo by ID.
-  findById(id: string): Todo | null {
-    const db = getDatabase();
-    const row = db.select().from(todos).where(eq(todos.id, id)).get();
+  async findById(id: string): Promise<Todo | null> {
+    const rows = await db.select().from(todos).where(eq(todos.id, id));
+    const row = rows[0];
 
     if (!row) return null;
     return this.mapRow(row);
   }
 
   // List todos with filtering, sorting, and pagination.
-  findAll(filter: TodoFilter): PaginatedResult<Todo> {
-    const db = getDatabase();
+  async findAll(filter: TodoFilter): Promise<PaginatedResult<Todo>> {
     const conditions: SQL[] = [];
 
     // Build WHERE conditions
@@ -64,11 +61,10 @@ export class TodoRepository {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Count total
-    const [{ total }] = db
+    const [{ total }] = await db
       .select({ total: count() })
       .from(todos)
-      .where(whereClause)
-      .all();
+      .where(whereClause);
 
     // Sorting
     const sortBy = filter.sortBy || 'created_at';
@@ -88,14 +84,13 @@ export class TodoRepository {
     const limit = Math.min(100, Math.max(1, filter.limit || 10));
     const offset = (page - 1) * limit;
 
-    const rows = db
+    const rows = await db
       .select()
       .from(todos)
       .where(whereClause)
       .orderBy(orderFn(sortColumn))
       .limit(limit)
-      .offset(offset)
-      .all();
+      .offset(offset);
 
     return {
       data: rows.map(this.mapRow),
@@ -109,10 +104,8 @@ export class TodoRepository {
   }
 
   // Update a todo by ID.
-  update(id: string, dto: UpdateTodoDto): Todo | null {
-    const db = getDatabase();
-
-    const existing = this.findById(id);
+  async update(id: string, dto: UpdateTodoDto): Promise<Todo | null> {
+    const existing = await this.findById(id);
     if (!existing) return null;
 
     const updates: Record<string, unknown> = {
@@ -133,19 +126,17 @@ export class TodoRepository {
     if (dto.priority !== undefined) updates.priority = dto.priority;
     if (dto.due_date !== undefined) updates.dueDate = dto.due_date;
 
-    db.update(todos)
+    await db.update(todos)
       .set(updates)
-      .where(eq(todos.id, id))
-      .run();
+      .where(eq(todos.id, id));
 
-    return this.findById(id)!;
+    return (await this.findById(id))!;
   }
 
   // Delete a todo by ID. Returns true if deleted, false if not found.
-  delete(id: string): boolean {
-    const db = getDatabase();
-    const result = db.delete(todos).where(eq(todos.id, id)).run();
-    return result.changes > 0;
+  async delete(id: string): Promise<boolean> {
+    const result = await db.delete(todos).where(eq(todos.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Map a Drizzle row to a Todo object.
@@ -154,8 +145,8 @@ export class TodoRepository {
       id: row.id,
       title: row.title,
       description: row.description,
-      status: row.status,
-      priority: row.priority,
+      status: row.status as TodoStatus,
+      priority: row.priority as TodoPriority,
       due_date: row.dueDate,
       completed_at: row.completedAt,
       created_at: row.createdAt,
