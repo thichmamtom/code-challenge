@@ -9,8 +9,9 @@ CREATE TABLE "todos" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
-CREATE INDEX "idx_todos_status" ON "todos" USING btree ("status");
-CREATE INDEX "idx_todos_priority" ON "todos" USING btree ("priority");
-CREATE INDEX "idx_todos_due_date" ON "todos" USING btree ("due_date");
-CREATE INDEX "idx_todos_created_at" ON "todos" USING btree ("created_at");
+--> statement-breakpoint
+CREATE INDEX "idx_todos_status" ON "todos" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "idx_todos_priority" ON "todos" USING btree ("priority");--> statement-breakpoint
+CREATE INDEX "idx_todos_due_date" ON "todos" USING btree ("due_date");--> statement-breakpoint
+CREATE INDEX "idx_todos_created_at" ON "todos" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "idx_todos_status_priority" ON "todos" USING btree ("status","priority");
